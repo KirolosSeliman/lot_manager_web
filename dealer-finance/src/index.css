@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: #09090C;
+    color: #F4F3F8;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #34344A; border-radius: 3px; }
+
+  input, textarea, select {
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #55546A;
+  }
+
+  select option {
+    background: #18181F;
+    color: #F4F3F8;
+  }
+}
+
+@layer components {
+  .page-fade {
+    animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .card {
+    @apply bg-surface border border-line rounded-xl p-5;
+  }
+
+  .field-input {
+    @apply w-full bg-surface2 border border-line2 rounded-lg px-3 py-2.5
+           text-snow text-sm outline-none transition-colors duration-150
+           focus:border-line3;
+  }
+
+  .btn-primary {
+    @apply w-full py-3 rounded-xl bg-snow text-bg font-display font-bold
+           text-sm tracking-widest cursor-pointer border-none
+           transition-opacity duration-150 hover:opacity-90;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent border border-line2 rounded-lg px-3 py-2
+           text-dim text-xs cursor-pointer transition-all duration-150
+           hover:border-line3 hover:text-snow2;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold;
+  }
+
+  .badge-bought  { @apply badge bg-info/10 text-info; }
+  .badge-repair  { @apply badge bg-warn/10 text-warn; }
+  .badge-lot     { @apply badge bg-go/10 text-go; }
+  .badge-sold    { @apply badge bg-dim2/40 text-snow3; }
+
+  .field-label {
+    @apply text-[10px] text-dim tracking-widest uppercase font-semibold block;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-2.5 w-full rounded-lg border-none cursor-pointer
+           text-sm font-medium transition-colors duration-150
+           bg-transparent text-dim hover:bg-white/[0.04];
+  }
+
+  .nav-item.active {
+    @apply bg-white/[0.06] text-snow;
+  }
+
+  .section-head {
+    @apply flex items-center gap-2.5 mb-5 pb-4 border-b border-line;
+  }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid #2A2A38;
+  border-top-color: #F4F3F8;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
