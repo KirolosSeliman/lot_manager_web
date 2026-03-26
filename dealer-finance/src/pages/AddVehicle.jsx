@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { supabase } from '../lib/supabase'
@@ -95,7 +95,6 @@ export default function AddVehicle() {
   const { id }   = useParams()
   const { user } = useAuth()
   const isEdit   = !!id
-  const submitRef = useRef(null)
 
   const [step,     setStep]     = useState(0)
   const [saving,   setSaving]   = useState(false)
@@ -190,7 +189,6 @@ export default function AddVehicle() {
   const showToast = (msg, type='ok') => { setToast({msg,type}); setTimeout(()=>setToast({msg:'',type:'ok'}),3500) }
 
   const onSubmit = async (data) => {
-    if (!data.make || !data.model) { showToast('❌ Marque et modèle requis','err'); setStep(0); return }
     setSaving(true)
     try {
       const vPayload = {
@@ -242,14 +240,12 @@ export default function AddVehicle() {
         if (error) throw new Error('Vente: ' + error.message)
       }
 
-      // Save photos to DB
       if (photos.length) {
         const photoRows = photos.map(p => ({ vehicle_id: vehicleId, storage_path: p.path, url: p.url, file_type: 'photo' }))
         const { error } = await supabase.from('vehicle_media').insert(photoRows)
         if (error) throw new Error('Photos: ' + error.message)
       }
 
-      // Save docs to DB
       if (docs.length) {
         const docRows = docs.map(d => ({ vehicle_id: vehicleId, storage_path: d.path, url: d.url || d.path, file_type: 'document', file_name: d.name }))
         const { error } = await supabase.from('vehicle_media').insert(docRows)
@@ -265,10 +261,8 @@ export default function AddVehicle() {
     setSaving(false)
   }
 
-  // Triggered by the PageHeader save button (outside the form)
-  const triggerSave = () => {
-    submitRef.current?.click()
-  }
+  // Appel direct de handleSubmit — pas besoin de <form> ou de ref
+  const triggerSave = () => handleSubmit(onSubmit)()
 
   const taxInfo = TAX_RATES[province] || TAX_RATES.QC
 
@@ -285,16 +279,11 @@ export default function AddVehicle() {
         }
       />
 
-      {/* Hidden submit button wired to react-hook-form */}
-      <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'none' }}>
-        <button ref={submitRef} type="submit" />
-      </form>
-
       {/* Steps */}
       <div className="flex-shrink-0 bg-surface border-b border-line">
         <div className="grid grid-cols-4">
           {STEPS.map((s,i) => (
-            <button key={s} onClick={()=>setStep(i)}
+            <button key={s} type="button" onClick={()=>setStep(i)}
               className="py-3 text-center cursor-pointer border-none bg-transparent border-r border-line last:border-r-0"
               style={{ background:i===step?'rgba(255,255,255,0.04)':'transparent', borderBottom:i===step?'2px solid #F4F3F8':'2px solid transparent' }}>
               <span className="text-[10px] tracking-widest uppercase"
@@ -311,22 +300,22 @@ export default function AddVehicle() {
           {step===0 && (
             <Section icon="🚗" title="Identification du véhicule">
               <div className="grid grid-cols-2 gap-4">
-                <FI label="Année" type="number" placeholder="2022" required error={errors.year} {...register('year',{required:true})} />
-                <FI label="Marque" placeholder="Toyota, Honda…" required error={errors.make} {...register('make',{required:true})} />
-                <FI label="Modèle" placeholder="Camry, Civic…" required error={errors.model} {...register('model',{required:true})} />
+                <FI label="Année" type="number" placeholder="2022" error={errors.year} {...register('year',{required:true})} />
+                <FI label="Marque" placeholder="Toyota, Honda…" error={errors.make} {...register('make',{required:true})} />
+                <FI label="Modèle" placeholder="Camry, Civic…" error={errors.model} {...register('model',{required:true})} />
                 <FI label="VIN" placeholder="1HGBH41JXMN109186" hint="17 caractères" {...register('vin')} />
                 <FI label="Kilométrage" type="number" placeholder="45 000" {...register('mileage')} />
                 <FI label="Couleur" placeholder="Blanc, Noir…" {...register('color')} />
-                <FS label="Transmission" required {...register('transmission')}>
+                <FS label="Transmission" {...register('transmission')}>
                   {['Automatique','Manuelle'].map(o=><option key={o}>{o}</option>)}
                 </FS>
-                <FS label="Province d'origine" required {...register('origin_province')}>
+                <FS label="Province d'origine" {...register('origin_province')}>
                   {PROVINCES.map(p=><option key={p.code} value={p.code}>{p.name}</option>)}
                 </FS>
                 <FS label="Source d'achat" {...register('purchase_source')}>
                   {['OpenLane','Autre encan','Achat privé','Reprise'].map(o=><option key={o}>{o}</option>)}
                 </FS>
-                <FI label="Date d'achat" type="date" required error={errors.purchase_date} {...register('purchase_date',{required:true})} />
+                <FI label="Date d'achat" type="date" error={errors.purchase_date} {...register('purchase_date',{required:true})} />
                 <div className="col-span-2 flex flex-col gap-2">
                   <label className="field-label">Statut *</label>
                   <div className="flex gap-2 flex-wrap">
@@ -356,7 +345,7 @@ export default function AddVehicle() {
                 <span>Coche <strong>"Ma poche"</strong> sur les dépenses payées personnellement — elles n'affectent pas le cash de la compagnie mais sont comptées dans le vrai profit.</span>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-5">
-                <FI label="Prix d'achat ($)" type="number" step="0.01" placeholder="0.00" required {...register('purchase_price',{required:true})} />
+                <FI label="Prix d'achat ($)" type="number" step="0.01" placeholder="0.00" error={errors.purchase_price} {...register('purchase_price',{required:true})} />
 
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between"><label className="field-label">Transport ($)</label><PocketToggle val={transportPocket} set={setTransportPocket}/></div>
@@ -455,8 +444,8 @@ export default function AddVehicle() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
-                  <FI label="Prix de vente ($)" type="number" step="0.01" placeholder="0.00" required {...register('sale_price')}/>
-                  <FI label="Date de vente" type="date" required {...register('sale_date')}/>
+                  <FI label="Prix de vente ($)" type="number" step="0.01" placeholder="0.00" {...register('sale_price')}/>
+                  <FI label="Date de vente" type="date" {...register('sale_date')}/>
                   <div className="col-span-2">
                     <label className="field-label mb-1.5">Canal de vente</label>
                     <div className="relative">
