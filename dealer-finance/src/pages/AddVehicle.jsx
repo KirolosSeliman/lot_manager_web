@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { supabase } from '../lib/supabase'
@@ -95,6 +95,7 @@ export default function AddVehicle() {
   const { id }   = useParams()
   const { user } = useAuth()
   const isEdit   = !!id
+  const submitRef = useRef(null)
 
   const [step,     setStep]     = useState(0)
   const [saving,   setSaving]   = useState(false)
@@ -241,6 +242,20 @@ export default function AddVehicle() {
         if (error) throw new Error('Vente: ' + error.message)
       }
 
+      // Save photos to DB
+      if (photos.length) {
+        const photoRows = photos.map(p => ({ vehicle_id: vehicleId, storage_path: p.path, url: p.url, file_type: 'photo' }))
+        const { error } = await supabase.from('vehicle_media').insert(photoRows)
+        if (error) throw new Error('Photos: ' + error.message)
+      }
+
+      // Save docs to DB
+      if (docs.length) {
+        const docRows = docs.map(d => ({ vehicle_id: vehicleId, storage_path: d.path, url: d.url || d.path, file_type: 'document', file_name: d.name }))
+        const { error } = await supabase.from('vehicle_media').insert(docRows)
+        if (error) throw new Error('Documents: ' + error.message)
+      }
+
       showToast('✓ Véhicule enregistré !','ok')
       setTimeout(()=>navigate(`/vehicles/${vehicleId}`),900)
     } catch(err) {
@@ -248,6 +263,11 @@ export default function AddVehicle() {
       showToast('❌ '+err.message,'err')
     }
     setSaving(false)
+  }
+
+  // Triggered by the PageHeader save button (outside the form)
+  const triggerSave = () => {
+    submitRef.current?.click()
   }
 
   const taxInfo = TAX_RATES[province] || TAX_RATES.QC
@@ -258,12 +278,17 @@ export default function AddVehicle() {
         title={isEdit ? 'Modifier le véhicule' : 'Ajouter un véhicule'}
         sub={isEdit ? 'Modification' : 'Nouveau véhicule'}
         actions={
-          <button onClick={handleSubmit(onSubmit)} disabled={saving}
+          <button type="button" onClick={triggerSave} disabled={saving}
             className="bg-snow text-bg font-display font-bold text-xs tracking-widest px-5 py-2 rounded-lg border-none cursor-pointer hover:opacity-90 flex items-center gap-2 disabled:opacity-50">
             {saving ? <><div className="spinner" style={{width:14,height:14}}/> Enregistrement…</> : '💾 Sauvegarder'}
           </button>
         }
       />
+
+      {/* Hidden submit button wired to react-hook-form */}
+      <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'none' }}>
+        <button ref={submitRef} type="submit" />
+      </form>
 
       {/* Steps */}
       <div className="flex-shrink-0 bg-surface border-b border-line">
@@ -520,7 +545,7 @@ export default function AddVehicle() {
                 </div>
               </div>
               <StepNav onPrev={()=>setStep(2)}/>
-              <button type="button" onClick={handleSubmit(onSubmit)} disabled={saving}
+              <button type="button" onClick={triggerSave} disabled={saving}
                 className="btn-primary mt-2 flex items-center justify-center gap-2">
                 {saving?<><div className="spinner" style={{width:16,height:16}}/> Enregistrement…</>:'💾 ENREGISTRER LE VÉHICULE'}
               </button>
