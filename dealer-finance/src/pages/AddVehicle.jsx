@@ -114,8 +114,20 @@ export default function AddVehicle() {
   const [washPocket,      setWashPocket]      = useState(false)
   const [gasPocket,       setGasPocket]       = useState(false)
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
-    defaultValues: { status: 'bought', origin_province: 'QC', purchase_source: 'OpenLane', transmission: 'Automatique' }
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    mode: 'onChange',
+    defaultValues: {
+      status: 'bought',
+      origin_province: 'QC',
+      purchase_source: 'OpenLane',
+      transmission: 'Automatique',
+    },
   })
   const w = watch()
 
@@ -261,7 +273,6 @@ export default function AddVehicle() {
     setSaving(false)
   }
 
-  // Appel direct de handleSubmit — pas besoin de <form> ou de ref
   const triggerSave = () => handleSubmit(onSubmit)()
 
   const taxInfo = TAX_RATES[province] || TAX_RATES.QC
@@ -300,12 +311,21 @@ export default function AddVehicle() {
           {step===0 && (
             <Section icon="🚗" title="Identification du véhicule">
               <div className="grid grid-cols-2 gap-4">
-                <FI label="Année" type="number" placeholder="2022" error={errors.year} {...register('year',{required:true})} />
-                <FI label="Marque" placeholder="Toyota, Honda…" error={errors.make} {...register('make',{required:true})} />
-                <FI label="Modèle" placeholder="Camry, Civic…" error={errors.model} {...register('model',{required:true})} />
-                <FI label="VIN" placeholder="1HGBH41JXMN109186" hint="17 caractères" {...register('vin')} />
-                <FI label="Kilométrage" type="number" placeholder="45 000" {...register('mileage')} />
-                <FI label="Couleur" placeholder="Blanc, Noir…" {...register('color')} />
+                <FI label="Année" type="number" placeholder="2022"
+                  error={errors.year}
+                  {...register('year', { required: true, valueAsNumber: true })} />
+                <FI label="Marque" placeholder="Toyota, Honda…"
+                  error={errors.make}
+                  {...register('make', { required: true })} />
+                <FI label="Modèle" placeholder="Camry, Civic…"
+                  error={errors.model}
+                  {...register('model', { required: true })} />
+                <FI label="VIN" placeholder="1HGBH41JXMN109186" hint="17 caractères"
+                  {...register('vin')} />
+                <FI label="Kilométrage" type="number" placeholder="45 000"
+                  {...register('mileage')} />
+                <FI label="Couleur" placeholder="Blanc, Noir…"
+                  {...register('color')} />
                 <FS label="Transmission" {...register('transmission')}>
                   {['Automatique','Manuelle'].map(o=><option key={o}>{o}</option>)}
                 </FS>
@@ -315,7 +335,9 @@ export default function AddVehicle() {
                 <FS label="Source d'achat" {...register('purchase_source')}>
                   {['OpenLane','Autre encan','Achat privé','Reprise'].map(o=><option key={o}>{o}</option>)}
                 </FS>
-                <FI label="Date d'achat" type="date" error={errors.purchase_date} {...register('purchase_date',{required:true})} />
+                <FI label="Date d'achat" type="date"
+                  error={errors.purchase_date}
+                  {...register('purchase_date', { required: true })} />
                 <div className="col-span-2 flex flex-col gap-2">
                   <label className="field-label">Statut *</label>
                   <div className="flex gap-2 flex-wrap">
@@ -345,7 +367,9 @@ export default function AddVehicle() {
                 <span>Coche <strong>"Ma poche"</strong> sur les dépenses payées personnellement — elles n'affectent pas le cash de la compagnie mais sont comptées dans le vrai profit.</span>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-5">
-                <FI label="Prix d'achat ($)" type="number" step="0.01" placeholder="0.00" error={errors.purchase_price} {...register('purchase_price',{required:true})} />
+                <FI label="Prix d'achat ($)" type="number" step="0.01" placeholder="0.00"
+                  error={errors.purchase_price}
+                  {...register('purchase_price', { required: true })} />
 
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between"><label className="field-label">Transport ($)</label><PocketToggle val={transportPocket} set={setTransportPocket}/></div>
