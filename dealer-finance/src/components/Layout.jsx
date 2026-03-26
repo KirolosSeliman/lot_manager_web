@@ -6,6 +6,7 @@ const NAV = [
   { to: '/',          icon: '▦', label: 'Dashboard',   exact: true },
   { to: '/inventory', icon: '≡', label: 'Inventaire' },
   { to: '/vehicles/new', icon: '＋', label: 'Ajouter' },
+  { to: '/capital',   icon: '💵', label: 'Capital',    adminOnly: true },
   { to: '/expenses',  icon: '◈', label: 'Dépenses',   adminOnly: true },
   { to: '/settings',  icon: '⚙', label: 'Paramètres', adminOnly: true },
 ]

@@ -7,6 +7,7 @@ import Inventory from './pages/Inventory'
 import AddVehicle from './pages/AddVehicle'
 import VehicleDetail from './pages/VehicleDetail'
 import Expenses from './pages/Expenses'
+import Capital from './pages/Capital'
 import Settings from './pages/Settings'
 
 function ProtectedRoute({ children, adminOnly = false }) {
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route path="vehicles/:id" element={<VehicleDetail />} />
         <Route path="vehicles/:id/edit" element={<AddVehicle />} />
         <Route path="expenses" element={<ProtectedRoute adminOnly><Expenses /></ProtectedRoute>} />
+        <Route path="capital"  element={<ProtectedRoute adminOnly><Capital /></ProtectedRoute>} />
         <Route path="settings" element={<ProtectedRoute adminOnly><Settings /></ProtectedRoute>} />
       </Route>
 

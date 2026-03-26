@@ -36,40 +36,47 @@ export default function Dashboard() {
 
   async function loadAll() {
     setLoading(true)
-    const [summaries, expenses, settings] = await Promise.all([
+    const [summaries, expenses, settings, capital] = await Promise.all([
       supabase.from('vehicle_summary').select('*'),
       supabase.from('fixed_expenses').select('*').eq('is_active', true),
       supabase.from('settings').select('*'),
+      supabase.from('capital_transactions').select('amount'),
     ])
 
     const vehicles = summaries.data || []
     const exps     = expenses.data  || []
     const sets     = Object.fromEntries((settings.data || []).map(s => [s.key, s.value]))
+    const capTotal = (capital.data || []).reduce((s, t) => s + Number(t.amount), 0)
 
     const alertDays = Number(sets.lot_time_alert_days || 60)
     setLotAlert(alertDays)
 
-    // KPIs
-    const active   = vehicles.filter(v => v.status !== 'sold')
-    const sold     = vehicles.filter(v => v.status === 'sold')
+    const active    = vehicles.filter(v => v.status !== 'sold')
+    const sold      = vehicles.filter(v => v.status === 'sold')
     const thisMonth = sold.filter(v => {
       if (!v.sale_date) return false
-      const d = new Date(v.sale_date)
-      const now = new Date()
+      const d = new Date(v.sale_date), now = new Date()
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
     })
 
-    const totalInvested   = active.reduce((s, v) => s + (v.total_cost || 0), 0)
-    const totalSalesCash  = sold.reduce((s, v)  => s + (v.sale_price || 0), 0)
-    const monthlyExp      = exps.reduce((s, e)  => s + monthlyAmount(e), 0)
-    const cashFree        = totalSalesCash - totalInvested - monthlyExp
-    const avgProfit       = sold.length ? sold.reduce((s, v) => s + (v.net_profit || 0), 0) / sold.length : 0
-    const soldLotTimes    = sold.filter(v => v.days_on_lot != null).map(v => v.days_on_lot)
-    const avgLot          = soldLotTimes.length ? soldLotTimes.reduce((a, b) => a + b, 0) / soldLotTimes.length : 0
-    const monthProfit     = thisMonth.reduce((s, v) => s + (v.net_profit || 0), 0)
+    // Use company_cost (excludes pocket expenses) for cash calculation
+    const totalCompanyInvested = active.reduce((s, v) => s + Number(v.company_cost || v.total_cost || 0), 0)
+    const totalSalesCash       = sold.reduce((s, v)   => s + Number(v.sale_price   || 0), 0)
+    const totalCompanyCosts    = sold.reduce((s, v)   => s + Number(v.company_cost || v.total_cost || 0), 0)
+    const monthlyExp           = exps.reduce((s, e)   => s + monthlyAmount(e), 0)
+
+    // Cash libre = Capital injecté + Ventes encaissées - Coûts compagnie des voitures vendues - Voitures actives (coût compagnie) - Dépenses fixes mois courant
+    const cashFree = capTotal + totalSalesCash - totalCompanyCosts - totalCompanyInvested - monthlyExp
+
+    const avgProfit    = sold.length ? sold.reduce((s,v)=>s+Number(v.net_profit||0),0)/sold.length : 0
+    const soldLotTimes = sold.filter(v=>v.days_on_lot!=null).map(v=>v.days_on_lot)
+    const avgLot       = soldLotTimes.length ? soldLotTimes.reduce((a,b)=>a+b,0)/soldLotTimes.length : 0
+    const monthProfit  = thisMonth.reduce((s,v)=>s+Number(v.net_profit||0),0)
 
     setKpis({
-      cashFree, totalInvested,
+      cashFree,
+      totalInvested: totalCompanyInvested,
+      capitalTotal: capTotal,
       activeCount: active.length,
       monthCount: thisMonth.length, monthProfit,
       avgProfit, avgLot: Math.round(avgLot),
